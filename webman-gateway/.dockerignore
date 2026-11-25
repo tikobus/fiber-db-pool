@@ -1,0 +1,8 @@
+vendor/
+runtime/logs/
+runtime/views/
+runtime/container/
+.git/
+.env
+/tmp/
+*.log

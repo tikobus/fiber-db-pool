@@ -1,0 +1,24 @@
+# ---- PHP 依赖（锁定提交，vendor 忽略）----
+vendor/
+composer.phar
+
+# ---- 运行时 / 日志 ----
+amp-mysql-rpc/logs/
+webman-gateway/runtime/
+*.log
+*.pid
+nohup.out
+
+# ---- 环境变量（示例文件保留）----
+.env
+webman-gateway/.env
+
+# ---- IDE / OS ----
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# ---- 临时文件 ----
+/tmp/
+*.bak

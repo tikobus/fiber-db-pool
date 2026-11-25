@@ -1,0 +1,66 @@
+name: fiber-db-pool
+
+services:
+  # ---------------------------------------------------------------
+  # MySQL 8.4：底层数据库（docker-entrypoint-initdb.d 自动建表+种子数据）
+  # ---------------------------------------------------------------
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: test
+    volumes:
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p123456"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------
+  # AmpMySQL JSON-RPC 服务：异步 MySQL 代理（amphp，无 Swoole 依赖）
+  # ---------------------------------------------------------------
+  mysql-rpc:
+    build: ./amp-mysql-rpc
+    environment:
+      RPC_LISTEN: "tcp://0.0.0.0:9501"
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      MYSQL_PASSWORD: "123456"
+      MYSQL_DATABASE: test
+      MYSQL_MAX_CONNECTIONS: "16"
+      SQL_TIMEOUT: "2"
+      MAX_CONCURRENCY: "64"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    # 探活由镜像内置 HEALTHCHECK（Mysql.ping 真实执行 SELECT 1）提供
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------
+  # Webman HTTP 网关：Fiber 事件循环 + 异步 JSON-RPC 客户端
+  # ---------------------------------------------------------------
+  webman:
+    build: ./webman-gateway
+    environment:
+      RPC_ADDRESS: "tcp://mysql-rpc:9501"
+      RPC_ENABLE: "1"
+      # 回滚开关备用：RPC_ENABLE=0 降级为同步 PDO 直连
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      MYSQL_PASSWORD: "123456"
+      MYSQL_DATABASE: test
+    depends_on:
+      mysql-rpc:
+        condition: service_healthy
+    ports:
+      - "8787:8787"
+    restart: unless-stopped
+
+volumes:
+  mysql-data:

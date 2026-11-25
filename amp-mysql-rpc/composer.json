@@ -1,0 +1,20 @@
+{
+    "name": "fiber-db-pool/mysql-rpc",
+    "description": "fiber-db-pool MySQL proxy: async JSON-RPC 2.0 over TCP with amphp/mysql connection pooling (Swoole-free)",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "amphp/mysql": "^3.1",
+        "amphp/socket": "^2.4",
+        "amphp/log": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "AmpMysqlRpc\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
