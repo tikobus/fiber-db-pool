@@ -97,12 +97,14 @@ curl http://127.0.0.1:8787/api/health   # mysql:"up" 即全链路通
 | 场景 | 结果 |
 | --- | --- |
 | wrk 4t×100c 30s `GET /api/user?id=1` | **457.28 QPS**，延迟 p50 213ms / p75 227ms / p90 247ms / p99 298ms（avg 218ms，max 352ms）；13740 请求 / 30.05s，0 错误 |
+| wrk 4t×50c 30s `GET /api/user?id=1` | **571.56 QPS**，延迟 p50 81ms / p75 87ms / p90 98ms / p99 146ms（avg 84ms，max 181ms）；17175 请求 / 30.05s，0 错误 |
 
 ```bash
 wrk -t4 -c100 -d30s --latency http://127.0.0.1:8787/api/user?id=1
+wrk -t4 -c50 -d30s --latency http://127.0.0.1:8787/api/user?id=1
 ```
 
-> 说明：云端为 2.2GHz 共享核心 Xeon，单核算力明显低于本机 Apple Silicon，QPS 差异主要来自硬件；延迟分布平稳（p99 298ms，无长尾堆积），吞吐仍高于同步 PDO 方案的对标区间（200–400）。
+> 说明：云端为 2.2GHz 共享核心 Xeon，单核算力明显低于本机 Apple Silicon，QPS 差异主要来自硬件；两档并发下延迟分布均平稳无长尾（100c 时 p99 298ms，50c 时 p99 146ms），100c 较 50c 并发翻倍仅换 21% 吞吐提升，瓶颈接近饱和；吞吐仍高于同步 PDO 方案的对标区间（200–400）。
 
 ## 容错与回滚（阶段 5）
 
