@@ -19,7 +19,6 @@ EXPOSE 9501
 
 # 全链路探活：Mysql.ping 真实执行 SELECT 1（MySQL 不可达则失败）
 HEALTHCHECK --interval=5s --timeout=3s --retries=10 --start-period=5s \
-    CMD php -r '$c=@stream_socket_client("tcp://127.0.0.1:9501",$e,$s,2);if(!$c){exit(1);}fwrite($c,"{\"jsonrpc\":\"2.0\",\"id\":\"hc\",\"method\":\"Mysql.ping\",\"params\":[]}
-");$r=fgets($c);exit(strpos($r,"\"pong\":true")!==false?0:1);'
+    CMD php -r '$c=@stream_socket_client("tcp://127.0.0.1:9501",$e,$s,2);if(!$c){exit(1);}fwrite($c,"{\"jsonrpc\":\"2.0\",\"id\":\"hc\",\"method\":\"Mysql.ping\",\"params\":[]}\n");$r=fgets($c);exit(strpos($r,"\"pong\":true")!==false?0:1);'
 
 CMD ["php", "bin/server.php"]
