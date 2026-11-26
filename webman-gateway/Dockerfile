@@ -1,14 +1,15 @@
-FROM php:8.4-cli
+# 统一基础镜像：ghcr.io/tikobus/php:8.5.13-rocky（与 amp-mysql-rpc 一致）
+# 镜像内置：PHP 8.5.13（静态编译 pcntl/posix/mbstring/zip/curl/openssl/pdo_mysql 等扩展）
+#           Composer 2.11.3（/usr/local/bin/composer）、php.ini 位于 /usr/local/php/8.5/lib/
+FROM ghcr.io/tikobus/php:8.5.13-rocky
 
-# workerman 需要 pcntl/posix；opcache 提升加载性能
-RUN docker-php-ext-install pcntl posix opcache && \
-    echo "opcache.enable_cli=1" >> /usr/local/etc/php/conf.d/opcache.ini
-
-COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+# workerman 依赖的 pcntl/posix 已静态编译，无需 docker-php-ext-install；仅需开启 opcache
+RUN echo "opcache.enable=1" >> /usr/local/php/8.5/lib/php.ini && \
+    echo "opcache.enable_cli=1" >> /usr/local/php/8.5/lib/php.ini
 
 WORKDIR /app
 
-# 先装依赖（利用镜像层缓存）
+# 先装依赖（利用镜像层缓存；composer 已内置，zip/curl 扩展可用于下载解压）
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --optimize-autoloader --no-progress && \
     composer clear-cache

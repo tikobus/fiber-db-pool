@@ -1,14 +1,17 @@
-FROM php:8.2-cli-alpine
+# 统一基础镜像：ghcr.io/tikobus/php:8.5.13-rocky（与 webman-gateway 一致）
+# 镜像内置：PHP 8.5.13（静态编译 pcntl/posix/mbstring/zip/curl/openssl/pdo_mysql 等扩展）
+#           Composer 2.11.3（/usr/local/bin/composer）、php.ini 位于 /usr/local/php/8.5/lib/
+FROM ghcr.io/tikobus/php:8.5.13-rocky
 
-# amphp 纯 PHP 实现，无额外扩展依赖；如需更佳性能可启用 ext-ev / ext-event
-RUN docker-php-ext-install opcache && \
-    echo "opcache.enable_cli=1" >> /usr/local/etc/php/conf.d/opcache.ini
+# amphp 纯 PHP 实现无需额外扩展；仅需开启 opcache（CLI 常驻进程）
+RUN echo "opcache.enable=1" >> /usr/local/php/8.5/lib/php.ini && \
+    echo "opcache.enable_cli=1" >> /usr/local/php/8.5/lib/php.ini
 
 WORKDIR /app
 
+# 先装依赖（利用镜像层缓存；composer 已内置，zip/curl 扩展可用于下载解压）
 COPY composer.json composer.lock ./
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
-    composer install --no-dev --no-scripts --optimize-autoloader --no-progress && \
+RUN composer install --no-dev --no-scripts --optimize-autoloader --no-progress && \
     composer clear-cache
 
 COPY . .
