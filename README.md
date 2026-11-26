@@ -80,7 +80,9 @@ curl http://127.0.0.1:8787/api/health   # mysql:"up" 即全链路通
 | `GET /api/health` | 全链路探活（503 = RPC/MySQL 异常） |
 | `GET /api/stats` | 监控指标（请求量/失败率/超时率/P50/P95/P99/pending/连接数/熔断态） |
 
-## 压测结论（阶段 4，本机 macOS / 8C）
+## 压测结论（阶段 4）
+
+### 本机 macOS / 8C
 
 | 场景 | 结果 |
 | --- | --- |
@@ -89,6 +91,18 @@ curl http://127.0.0.1:8787/api/health   # mysql:"up" 即全链路通
 | RPC 宕机注入 | 网关 503 快速失败 7.2 万 QPS，无挂起（熔断+重连生效） |
 | SIGSTOP 冻结 RPC | 精确 3.003s 超时 504；5 并发同时超时（不串行堆积） |
 | 并发隔离 | 20 并发 / 5 并发挂起互不阻塞，恢复自愈 |
+
+### 云端 Google Cloud / 4C 16G / Intel Xeon @ 2.2GHz
+
+| 场景 | 结果 |
+| --- | --- |
+| wrk 4t×100c 30s `GET /api/user?id=1` | **457.28 QPS**，延迟 p50 213ms / p75 227ms / p90 247ms / p99 298ms（avg 218ms，max 352ms）；13740 请求 / 30.05s，0 错误 |
+
+```bash
+wrk -t4 -c100 -d30s --latency http://127.0.0.1:8787/api/user?id=1
+```
+
+> 说明：云端为 2.2GHz 共享核心 Xeon，单核算力明显低于本机 Apple Silicon，QPS 差异主要来自硬件；延迟分布平稳（p99 298ms，无长尾堆积），吞吐仍高于同步 PDO 方案的对标区间（200–400）。
 
 ## 容错与回滚（阶段 5）
 
