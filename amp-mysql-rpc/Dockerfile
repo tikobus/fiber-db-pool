@@ -11,7 +11,7 @@ WORKDIR /app
 
 # 先装依赖（利用镜像层缓存；composer 已内置，zip/curl 扩展可用于下载解压）
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --optimize-autoloader --no-progress && \
+RUN COMPOSER_MEMORY_LIMIT=2G composer install --no-dev --no-scripts --optimize-autoloader --no-progress && \
     composer clear-cache
 
 COPY . .
